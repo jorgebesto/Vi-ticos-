@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control de Viáticos</title>
+<style>
+  :root{
+    --bg:#f4f6f9;
+    --card:#ffffff;
+    --primary:#2b5797;
+    --primary-dark:#1d3f6e;
+    --accent:#3aa17e;
+    --danger:#c0392b;
+    --warn:#d68910;
+    --border:#e1e5ea;
+    --text:#22303f;
+    --muted:#6b7785;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', Arial, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding:24px;
+  }
+  h1{
+    text-align:center;
+    color:var(--primary-dark);
+    margin-bottom:4px;
+  }
+  .subtitle{
+    text-align:center;
+    color:var(--muted);
+    margin-bottom:24px;
+    font-size:14px;
+  }
+  .container{
+    max-width:1000px;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+  }
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:18px 20px;
+    box-shadow:0 1px 3px rgba(0,0,0,0.05);
+  }
+  .card h2{
+    margin-top:0;
+    font-size:18px;
+    color:var(--primary);
+    border-bottom:2px solid var(--border);
+    padding-bottom:8px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .top-info{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+  }
+  label{
+    font-size:13px;
+    color:var(--muted);
+    display:block;
+    margin-bottom:4px;
+  }
+  input[type=text], input[type=date], input[type=number]{
+    width:100%;
+    padding:8px 10px;
+    border:1px solid var(--border);
+    border-radius:6px;
+    font-size:14px;
+    background:#fbfcfd;
+  }
+  input:focus{
+    outline:none;
+    border-color:var(--primary);
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:8px;
+  }
+  th, td{
+    padding:8px;
+    text-align:left;
+    font-size:13px;
+    border-bottom:1px solid var(--border);
+  }
+  th{
+    color:var(--muted);
+    font-weight:600;
+    font-size:12px;
+    text-transform:uppercase;
+  }
+  td input{
+    padding:6px 8px;
+    font-size:13px;
+  }
+  .diff-pos{color:var(--danger); font-weight:600;}
+  .diff-zero{color:var(--accent); font-weight:600;}
+  .diff-neg{color:var(--warn); font-weight:600;}
+  .btn{
+    background:var(--primary);
+    color:white;
+    border:none;
+    padding:8px 14px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:13px;
+  }
+  .btn:hover{background:var(--primary-dark);}
+  .btn-small{
+    padding:4px 8px;
+    font-size:12px;
+  }
+  .btn-del{
+    background:var(--danger);
+  }
+  .btn-del:hover{
+    background:#922b21;
+  }
+  .btn-add{
+    background:var(--accent);
+  }
+  .btn-add:hover{
+    background:#2c7e62;
+  }
+  .row-actions{
+    text-align:center;
+  }
+  .resumen-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:14px;
+    text-align:center;
+  }
+  .resumen-item{
+    background:#f8fafc;
+    border-radius:8px;
+    padding:14px 8px;
+    border:1px solid var(--border);
+  }
+  .resumen-item .label{
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:6px;
+  }
+  .resumen-item .valor{
+    font-size:20px;
+    font-weight:700;
+  }
+  .saldo-ok{color:var(--accent);}
+  .saldo-mal{color:var(--danger);}
+  .saldo-warn{color:var(--warn);}
+  .footer-actions{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    margin-top:6px;
+  }
+  .empty-msg{
+    color:var(--muted);
+    font-size:13px;
+    font-style:italic;
+    padding:8px 0;
+  }
+  @media (max-width:700px){
+    .top-info{grid-template-columns:1fr;}
+    .resumen-grid{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+
+<h1>📋 Control de Viáticos</h1>
+<div class="subtitle">Transporte, comidas, materiales y fondos recibidos — todo en un solo lugar</div>
+
+<div class="container">
+
+  <!-- DATOS GENERALES -->
+  <div class="card">
+    <h2>Datos del viaje</h2>
+    <div class="top-info">
+      <div>
+        <label>Nombre / motivo del viaje</label>
+        <input type="text" id="nombreViaje" placeholder="Ej: Visita predial Bogotá - Tunja">
+      </div>
+      <div>
+        <label>Fecha</label>
+        <input type="date" id="fechaViaje">
+      </div>
+    </div>
+  </div>
+
+  <!-- TRANSPORTE -->
+  <div class="card">
+    <h2>🚌 Transporte (Ida y Vuelta)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Trayecto</th>
+          <th>Presupuestado ($)</th>
+          <th>Pagado ($)</th>
+          <th>Diferencia</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Ida</td>
+          <td><input type="number" id="t_ida_pres" min="0" oninput="calcular()"></td>
+          <td><input type="number" id="t_ida_pagado" min="0" oninput="calcular()"></td>
+          <td id="t_ida_diff">-</td>
+        </tr>
+        <tr>
+          <td>Vuelta</td>
+          <td><input type="number" id="t_vuelta_pres" min="0" oninput="calcular()"></td>
+          <td><input type="number" id="t_vuelta_pagado" min="0" oninput="calcular()"></td>
+          <td id="t_vuelta_diff">-</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- COMIDAS -->
+  <div class="card">
+    <h2>🍽️ Comidas</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Comida</th>
+          <th>Presupuestado ($)</th>
+          <th>Pagado ($)</th>
+          <th>Diferencia</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Desayuno</td>
+          <td><input type="number" id="c_desayuno_pres" min="0" oninput="calcular()"></td>
+          <td><input type="number" id="c_desayuno_pagado" min="0" oninput="calcular()"></td>
+          <td id="c_desayuno_diff">-</td>
+        </tr>
+        <tr>
+          <td>Almuerzo</td>
+          <td><input type="number" id="c_almuerzo_pres" min="0" oninput="calcular()"></td>
+          <td><input type="number" id="c_almuerzo_pagado" min="0" oninput="calcular()"></td>
+          <td id="c_almuerzo_diff">-</td>
+        </tr>
+        <tr>
+          <td>Cena</td>
+          <td><input type="number" id="c_cena_pres" min="0" oninput="calcular()"></td>
+          <td><input type="number" id="c_cena_pagado" min="0" oninput="calcular()"></td>
+          <td id="c_cena_diff">-</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- MATERIALES -->
+  <div class="card">
+    <h2>🧰 Materiales / Otros gastos
+      <button class="btn btn-add btn-small" onclick="agregarMaterial()">+ Agregar</button>
+    </h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Descripción</th>
+          <th>Presupuestado ($)</th>
+          <th>Pagado ($)</th>
+          <th>Diferencia</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tablaMateriales"></tbody>
+    </table>
+    <div id="materialesVacio" class="empty-msg">Aún no hay materiales registrados.</div>
+  </div>
+
+  <!-- FONDOS RECIBIDOS -->
+  <div class="card">
+    <h2>💰 Fondos recibidos (retiros / transferencias)
+      <button class="btn btn-add btn-small" onclick="agregarFondo()">+ Agregar</button>
+    </h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Tipo</th>
+          <th>Descripción</th>
+          <th>Monto ($)</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tablaFondos"></tbody>
+    </table>
+    <div id="fondosVacio" class="empty-msg">Aún no hay fondos registrados.</div>
+  </div>
+
+  <!-- RESUMEN -->
+  <div class="card">
+    <h2>📊 Resumen general</h2>
+    <div class="resumen-grid">
+      <div class="resumen-item">
+        <div class="label">Total presupuestado</div>
+        <div class="valor" id="resTotalPres">$0</div>
+      </div>
+      <div class="resumen-item">
+        <div class="label">Total pagado</div>
+        <div class="valor" id="resTotalPagado">$0</div>
+      </div>
+      <div class="resumen-item">
+        <div class="label">Total fondos recibidos</div>
+        <div class="valor" id="resTotalFondos">$0</div>
+      </div>
+      <div class="resumen-item">
+        <div class="label">Saldo (fondos − pagado)</div>
+        <div class="valor" id="resSaldo">$0</div>
+      </div>
+    </div>
+    <div class="footer-actions">
+      <button class="btn" onclick="guardarTodo()">💾 Guardar</button>
+      <button class="btn btn-del" onclick="borrarTodo()">🗑️ Borrar todo</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let materiales = [];
+let fondos = [];
+
+function fmt(n){
+  n = Number(n) || 0;
+  return '$' + n.toLocaleString('es-CO', {minimumFractionDigits:0, maximumFractionDigits:0});
+}
+
+function val(id){
+  return Number(document.getElementById(id).value) || 0;
+}
+
+function diffCelda(pres, pagado){
+  let d = pagado - pres;
+  if(d === 0) return {texto: fmt(0), clase:'diff-zero'};
+  if(d > 0) return {texto: '+' + fmt(d), clase:'diff-pos'}; // pagó más de lo presupuestado
+  return {texto: fmt(d), clase:'diff-neg'}; // pagó menos
+}
+
+function pintarDiff(idCelda, pres, pagado){
+  const r = diffCelda(pres, pagado);
+  const el = document.getElementById(idCelda);
+  el.textContent = r.texto;
+  el.className = r.clase;
+}
+
+function agregarMaterial(descripcion="", pres=0, pagado=0){
+  materiales.push({descripcion, pres, pagado});
+  renderMateriales();
+}
+
+function eliminarMaterial(idx){
+  materiales.splice(idx,1);
+  renderMateriales();
+  calcular();
+}
+
+function renderMateriales(){
+  const tbody = document.getElementById('tablaMateriales');
+  tbody.innerHTML = '';
+  document.getElementById('materialesVacio').style.display = materiales.length ? 'none' : 'block';
+  materiales.forEach((m, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="text" value="${m.descripcion}" oninput="materiales[${idx}].descripcion=this.value"></td>
+      <td><input type="number" min="0" value="${m.pres}" oninput="materiales[${idx}].pres=Number(this.value)||0; calcular();"></td>
+      <td><input type="number" min="0" value="${m.pagado}" oninput="materiales[${idx}].pagado=Number(this.value)||0; calcular();"></td>
+      <td id="mat_diff_${idx}">-</td>
+      <td class="row-actions"><button class="btn btn-del btn-small" onclick="eliminarMaterial(${idx})">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  calcular();
+}
+
+function agregarFondo(tipo="Transferencia", descripcion="", monto=0, fecha=""){
+  fondos.push({tipo, descripcion, monto, fecha});
+  renderFondos();
+}
+
+function eliminarFondo(idx){
+  fondos.splice(idx,1);
+  renderFondos();
+  calcular();
+}
+
+function renderFondos(){
+  const tbody = document.getElementById('tablaFondos');
+  tbody.innerHTML = '';
+  document.getElementById('fondosVacio').style.display = fondos.length ? 'none' : 'block';
+  fondos.forEach((f, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="date" value="${f.fecha}" oninput="fondos[${idx}].fecha=this.value"></td>
+      <td>
+        <select onchange="fondos[${idx}].tipo=this.value" style="padding:6px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
+          <option value="Retiro" ${f.tipo==='Retiro'?'selected':''}>Retiro</option>
+          <option value="Transferencia" ${f.tipo==='Transferencia'?'selected':''}>Transferencia</option>
+          <option value="Efectivo" ${f.tipo==='Efectivo'?'selected':''}>Efectivo entregado</option>
+          <option value="Otro" ${f.tipo==='Otro'?'selected':''}>Otro</option>
+        </select>
+      </td>
+      <td><input type="text" value="${f.descripcion}" oninput="fondos[${idx}].descripcion=this.value"></td>
+      <td><input type="number" min="0" value="${f.monto}" oninput="fondos[${idx}].monto=Number(this.value)||0; calcular();"></td>
+      <td class="row-actions"><button class="btn btn-del btn-small" onclick="eliminarFondo(${idx})">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  calcular();
+}
+
+function calcular(){
+  // Transporte
+  const tIdaPres = val('t_ida_pres'), tIdaPagado = val('t_ida_pagado');
+  const tVueltaPres = val('t_vuelta_pres'), tVueltaPagado = val('t_vuelta_pagado');
+  pintarDiff('t_ida_diff', tIdaPres, tIdaPagado);
+  pintarDiff('t_vuelta_diff', tVueltaPres, tVueltaPagado);
+
+  // Comidas
+  const cDesPres = val('c_desayuno_pres'), cDesPagado = val('c_desayuno_pagado');
+  const cAlmPres = val('c_almuerzo_pres'), cAlmPagado = val('c_almuerzo_pagado');
+  const cCenPres = val('c_cena_pres'), cCenPagado = val('c_cena_pagado');
+  pintarDiff('c_desayuno_diff', cDesPres, cDesPagado);
+  pintarDiff('c_almuerzo_diff', cAlmPres, cAlmPagado);
+  pintarDiff('c_cena_diff', cCenPres, cCenPagado);
+
+  // Materiales
+  let matPresTotal = 0, matPagadoTotal = 0;
+  materiales.forEach((m, idx) => {
+    matPresTotal += m.pres;
+    matPagadoTotal += m.pagado;
+    const el = document.getElementById('mat_diff_' + idx);
+    if(el){
+      const r = diffCelda(m.pres, m.pagado);
+      el.textContent = r.texto;
+      el.className = r.clase;
+    }
+  });
+
+  // Fondos
+  let fondosTotal = 0;
+  fondos.forEach(f => fondosTotal += f.monto);
+
+  // Totales generales
+  const totalPres = tIdaPres + tVueltaPres + cDesPres + cAlmPres + cCenPres + matPresTotal;
+  const totalPagado = tIdaPagado + tVueltaPagado + cDesPagado + cAlmPagado + cCenPagado + matPagadoTotal;
+  const saldo = fondosTotal - totalPagado;
+
+  document.getElementById('resTotalPres').textContent = fmt(totalPres);
+  document.getElementById('resTotalPagado').textContent = fmt(totalPagado);
+  document.getElementById('resTotalFondos').textContent = fmt(fondosTotal);
+
+  const saldoEl = document.getElementById('resSaldo');
+  saldoEl.textContent = fmt(saldo);
+  saldoEl.className = 'valor ' + (saldo > 0 ? 'saldo-ok' : (saldo === 0 ? '' : 'saldo-mal'));
+}
+
+function recolectarEstado(){
+  return {
+    nombreViaje: document.getElementById('nombreViaje').value,
+    fechaViaje: document.getElementById('fechaViaje').value,
+    transporte: {
+      ida: {pres: val('t_ida_pres'), pagado: val('t_ida_pagado')},
+      vuelta: {pres: val('t_vuelta_pres'), pagado: val('t_vuelta_pagado')}
+    },
+    comidas: {
+      desayuno: {pres: val('c_desayuno_pres'), pagado: val('c_desayuno_pagado')},
+      almuerzo: {pres: val('c_almuerzo_pres'), pagado: val('c_almuerzo_pagado')},
+      cena: {pres: val('c_cena_pres'), pagado: val('c_cena_pagado')}
+    },
+    materiales,
+    fondos
+  };
+}
+
+function guardarTodo(){
+  try{
+    localStorage.setItem('viaticos_data', JSON.stringify(recolectarEstado()));
+    alert('✅ Datos guardados correctamente en este navegador.');
+  }catch(e){
+    alert('No se pudo guardar: ' + e.message);
+  }
+}
+
+function cargarTodo(){
+  try{
+    const raw = localStorage.getItem('viaticos_data');
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    document.getElementById('nombreViaje').value = data.nombreViaje || '';
+    document.getElementById('fechaViaje').value = data.fechaViaje || '';
+    document.getElementById('t_ida_pres').value = data.transporte?.ida?.pres || '';
+    document.getElementById('t_ida_pagado').value = data.transporte?.ida?.pagado || '';
+    document.getElementById('t_vuelta_pres').value = data.transporte?.vuelta?.pres || '';
+    document.getElementById('t_vuelta_pagado').value = data.transporte?.vuelta?.pagado || '';
+    document.getElementById('c_desayuno_pres').value = data.comidas?.desayuno?.pres || '';
+    document.getElementById('c_desayuno_pagado').value = data.comidas?.desayuno?.pagado || '';
+    document.getElementById('c_almuerzo_pres').value = data.comidas?.almuerzo?.pres || '';
+    document.getElementById('c_almuerzo_pagado').value = data.comidas?.almuerzo?.pagado || '';
+    document.getElementById('c_cena_pres').value = data.comidas?.cena?.pres || '';
+    document.getElementById('c_cena_pagado').value = data.comidas?.cena?.pagado || '';
+    materiales = data.materiales || [];
+    fondos = data.fondos || [];
+    renderMateriales();
+    renderFondos();
+    calcular();
+  }catch(e){
+    console.error('Error cargando datos', e);
+  }
+}
+
+function borrarTodo(){
+  if(!confirm('¿Seguro que deseas borrar todos los datos? Esta acción no se puede deshacer.')) return;
+  localStorage.removeItem('viaticos_data');
+  document.getElementById('nombreViaje').value = '';
+  document.getElementById('fechaViaje').value = '';
+  document.querySelectorAll('input[type=number]').forEach(i => i.value = '');
+  materiales = [];
+  fondos = [];
+  renderMateriales();
+  renderFondos();
+  calcular();
+}
+
+// Autoguardado cada vez que cambian inputs principales
+document.addEventListener('input', () => {
+  clearTimeout(window._autosave);
+  window._autosave = setTimeout(guardarSilencioso, 600);
+});
+
+function guardarSilencioso(){
+  try{
+    localStorage.setItem('viaticos_data', JSON.stringify(recolectarEstado()));
+  }catch(e){}
+}
+
+// Inicializar
+cargarTodo();
+if(materiales.length === 0){ document.getElementById('materialesVacio').style.display='block'; }
+if(fondos.length === 0){ document.getElementById('fondosVacio').style.display='block'; }
+calcular();
+</script>
+
+</body>
+</html>
